@@ -41,7 +41,7 @@ func (r *response) Error() error {
 }
 
 func (er *emptyResponse) Result() interface{} {
-	return struct{}{}
+	return nil
 }
 
 func (er *emptyResponse) HasError() bool {

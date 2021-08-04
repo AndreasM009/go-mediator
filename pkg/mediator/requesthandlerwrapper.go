@@ -18,9 +18,11 @@ func buildRequestHandlerWrapper(prewrapper *preRequestProcessorWrapper, handler 
 
 func (h *requestHandlerWrapper) Handle(ctx context.Context, rq Request) Response {
 	// first run all preprocessors
-	err := h.prewrapper.Process(ctx, rq)
-	if err != nil {
-		return CreateResponse(nil, err)
+	if nil != h.prewrapper {
+		err := h.prewrapper.Process(ctx, rq)
+		if err != nil {
+			return CreateResponse(nil, err)
+		}
 	}
 
 	// run handler
@@ -29,10 +31,12 @@ func (h *requestHandlerWrapper) Handle(ctx context.Context, rq Request) Response
 		return resp
 	}
 
-	// run posprocessors
-	err = h.postwrapper.Process(ctx, rq, resp)
-	if err != nil {
-		return CreateResponse(resp.Result(), err)
+	// run postprocessors
+	if nil != h.postwrapper {
+		err := h.postwrapper.Process(ctx, rq, resp)
+		if err != nil {
+			return CreateResponse(resp.Result(), err)
+		}
 	}
 
 	return resp
