@@ -30,6 +30,10 @@ func NewEchoStringCommand(text string) *EchoStringCommand {
 type ReturnBoolCommand struct {
 }
 
+// simple say hello notification
+type SayHelloNotification struct {
+}
+
 // handle SayHelloCommand
 func HandleSayHello(ctx context.Context, rq mediator.Request) mediator.Response {
 	fmt.Println("Hello World!")
@@ -79,6 +83,16 @@ func PostProcessorForAllRequests(ctx context.Context, rq mediator.Request, resp 
 	return next(ctx, rq, resp)
 }
 
+func HandleSayHelloNotification1(ctx context.Context, n mediator.Notification) error {
+	fmt.Println("Notification1: Hello World!")
+	return nil
+}
+
+func HandleSayHelloNotification2(ctx context.Context, n mediator.Notification) error {
+	fmt.Println("Notification2: Hello World!")
+	return nil
+}
+
 func main() {
 	ctx := context.Background()
 
@@ -94,7 +108,10 @@ func main() {
 			mediator.WithRequest(&ReturnBoolCommand{}, mediator.RequestHandlerFunc(HandleReturnBoolCommand))).
 		ConfigureRequestProcessors(
 			mediator.WithPreRequestProcessor(mediator.PreRequestProcessorFunc(PreProcessorForAllRequests)),
-			mediator.WithPostRequestProcessor(mediator.PostRequestProcessorFunc(PostProcessorForAllRequests)))
+			mediator.WithPostRequestProcessor(mediator.PostRequestProcessorFunc(PostProcessorForAllRequests))).
+		ConfigureNotifications(
+			mediator.WithNotification(&SayHelloNotification{}, mediator.NotificationHandlerFunc(HandleSayHelloNotification1)),
+			mediator.WithNotification(&SayHelloNotification{}, mediator.NotificationHandlerFunc(HandleSayHelloNotification2)))
 
 	// send
 	r := <-m.Send(ctx, &SayHelloCommand{})
@@ -122,6 +139,11 @@ func main() {
 
 	result := r.Result().(bool)
 	fmt.Println(result)
+
+	nr := <-m.Publish(ctx, &SayHelloNotification{})
+	if nil != nr {
+		fmt.Println(nr)
+	}
 
 	fmt.Println("End...")
 }
