@@ -169,3 +169,81 @@ func TestMediatorRequestProcessor(t *testing.T) {
 	assert.True(t, postProcessorInvoked)
 	assert.True(t, postWasTheLast)
 }
+
+func TestMediatorAndRequestProcessors(t *testing.T) {
+	m := mediator.NewMediator()
+	ctx := context.Background()
+	handlerInvoked := false
+
+	preMediatorProcessorInvokked := false
+	postMediatorProcessorInvoked := false
+	postMediatorWasTheLast := true
+
+	preProcessorInvokked := false
+	postProcessorInvoked := false
+	postWasTheLast := true
+
+	lastMustBePostMediatorProcessor := false
+
+	type testRequest struct {
+	}
+
+	handler := func(ctx context.Context, rq mediator.Request) mediator.Response {
+		handlerInvoked = true
+		return mediator.CreateEmtpyResponse(nil)
+	}
+
+	preMediatorProcessor := func(ctx context.Context, rq mediator.Request, next mediator.NextPreRequestProcessorDelegate) error {
+		preMediatorProcessorInvokked = true
+		postMediatorWasTheLast = false
+		lastMustBePostMediatorProcessor = false
+		return next(ctx, rq)
+	}
+
+	postMediatorProcessor := func(ctx context.Context, rq mediator.Request, resp mediator.Response, next mediator.NextPostRequestProcessorDelegate) error {
+		postMediatorProcessorInvoked = true
+		postMediatorWasTheLast = true
+		lastMustBePostMediatorProcessor = true
+		return next(ctx, rq, resp)
+	}
+
+	preProcessor := func(ctx context.Context, rq mediator.Request, next mediator.NextPreRequestProcessorDelegate) error {
+		preProcessorInvokked = true
+		postWasTheLast = false
+		lastMustBePostMediatorProcessor = false
+		return next(ctx, rq)
+	}
+
+	postProcessor := func(ctx context.Context, rq mediator.Request, resp mediator.Response, next mediator.NextPostRequestProcessorDelegate) error {
+		postProcessorInvoked = true
+		postWasTheLast = true
+		lastMustBePostMediatorProcessor = false
+		return next(ctx, rq, resp)
+	}
+
+	m.
+		ConfigureRequests(
+			mediator.WithRequest(&testRequest{}, mediator.RequestHandlerFunc(handler)).
+				WithPreProcessor(mediator.PreRequestProcessorFunc(preProcessor)).
+				WithPostProcessor(mediator.PostRequestProcessorFunc(postProcessor))).
+		ConfigureRequestProcessors(
+			mediator.WithPreRequestProcessor(mediator.PreRequestProcessorFunc(preMediatorProcessor)),
+			mediator.WithPostRequestProcessor(mediator.PostRequestProcessorFunc(postMediatorProcessor)))
+
+	r := <-m.Send(ctx, &testRequest{})
+
+	assert.False(t, r.HasError())
+	assert.Nil(t, r.Error())
+	assert.Nil(t, r.Result())
+	assert.True(t, handlerInvoked)
+
+	assert.True(t, preMediatorProcessorInvokked)
+	assert.True(t, postMediatorProcessorInvoked)
+	assert.True(t, postMediatorWasTheLast)
+
+	assert.True(t, preProcessorInvokked)
+	assert.True(t, postProcessorInvoked)
+	assert.True(t, postWasTheLast)
+
+	assert.True(t, lastMustBePostMediatorProcessor)
+}
