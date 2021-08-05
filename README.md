@@ -113,5 +113,5 @@ m.
 		mediator.WithPreRequestProcessor(mediator.PreRequestProcessorFunc(preMediatorProcessor)),
 		mediator.WithPostRequestProcessor(mediator.PostRequestProcessorFunc(postMediatorProcessor)))
 
-	r := <-m.Send(ctx, &testRequest{})
+r := <-m.Send(ctx, &testRequest{})
 ```
