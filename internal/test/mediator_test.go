@@ -247,3 +247,35 @@ func TestMediatorAndRequestProcessors(t *testing.T) {
 
 	assert.True(t, lastMustBePostMediatorProcessor)
 }
+
+func TestNotification(t *testing.T) {
+	m := mediator.NewMediator()
+	ctx := context.Background()
+
+	handlerOneInvoked := false
+	handlerTwoInvoked := false
+
+	type testNotification struct {
+	}
+
+	handlerOne := func(ctx context.Context, n mediator.Notification) error {
+		handlerOneInvoked = true
+		return nil
+	}
+
+	handlerTwo := func(ctx context.Context, n mediator.Notification) error {
+		handlerTwoInvoked = true
+		return nil
+	}
+
+	m.
+		ConfigureNotifications(
+			mediator.WithNotification(&testNotification{}, mediator.NotificationHandlerFunc(handlerOne)),
+			mediator.WithNotification(&testNotification{}, mediator.NotificationHandlerFunc(handlerTwo)))
+
+	err := <-m.Publish(ctx, &testNotification{})
+
+	assert.Nil(t, err)
+	assert.True(t, handlerOneInvoked)
+	assert.True(t, handlerTwoInvoked)
+}
