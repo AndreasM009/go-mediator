@@ -50,7 +50,7 @@ func (h *EchoCommandHandler) Handle(ctx context.Context, command EchoCommand) (s
 	return command.Message, nil
 }
 
-func BehaviorFunc(ctx context.Context, req Request, next NextBipelineBehavior) (Response, error) {
+func BehaviorFunc(ctx context.Context, req Request, next mediator.NextBipelineBehavior) (Response, error) {
 	return next(ctx, req)
 }
 
@@ -61,7 +61,7 @@ func main() {
 		mediator.WithRequest[EchoCommand, string](EchoCommand{}, &EchoCommandHandler{}))
 
     m.ConfigureBehaviors(
-		mediator.WithBehavior(PipelineBehaviorFunc(BehaviorFunc)))
+		mediator.WithBehavior(mediator.PipelineBehaviorFunc(BehaviorFunc)))
 
 	echo, _ := Send[EchoCommand, string](context.TODO(), m, EchoCommand{Message: "Hello World"})
 	
