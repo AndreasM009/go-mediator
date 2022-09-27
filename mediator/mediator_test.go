@@ -2,6 +2,7 @@ package mediator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -34,6 +35,11 @@ func (e EchoValueStruct) Handle(ctx context.Context, msg string) (string, error)
 func BehaviorFunc(ctx context.Context, req Request, next NextBipelineBehavior) (Response, error) {
 	pipelineBehaviorFuncCalled = true
 	return next(ctx, req)
+}
+
+func BehaviorErrorFunc(ctx context.Context, req Request, next NextBipelineBehavior) (Response, error) {
+	pipelineBehaviorFuncCalled = true
+	return nil, errors.New("Test error")
 }
 
 func NotificationFunc(ctx context.Context, msg string) error {
@@ -126,4 +132,20 @@ func TestNotificationStruct(t *testing.T) {
 
 	err := Publish(context.TODO(), m, EventStruct{"Hello World"})
 	assert.Nil(t, err)
+}
+
+func TestBehavior_With_Error(t *testing.T) {
+	m := NewMediator()
+
+	m.ConfigureRequests(
+		WithRequest[string, string]("", EchoValueStruct{}))
+
+	m.ConfigureBehaviors(
+		WithBehavior(PipelineBehaviorFunc(BehaviorErrorFunc)))
+
+	pipelineBehaviorFuncCalled = false
+	echo, err := Send[string, string](context.TODO(), m, "Hello World")
+	assert.NotNil(t, err)
+	assert.Equal(t, true, pipelineBehaviorFuncCalled)
+	assert.Equal(t, "", echo)
 }

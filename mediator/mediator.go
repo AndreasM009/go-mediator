@@ -78,6 +78,12 @@ func Send[TRequest IsRequest, TResponse IsResponse](ctx context.Context, m *Medi
 	}
 
 	r, err := next(ctx, req)
+
+	if err != nil {
+		var result TResponse
+		return result, err
+	}
+
 	result := r.(TResponse)
 
 	return result, err
