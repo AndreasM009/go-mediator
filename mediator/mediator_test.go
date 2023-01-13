@@ -32,12 +32,12 @@ func (e EchoValueStruct) Handle(ctx context.Context, msg string) (string, error)
 	return msg, nil
 }
 
-func BehaviorFunc(ctx context.Context, req Request, next NextBipelineBehavior) (Response, error) {
+func BehaviorFunc(ctx context.Context, req Request, next NextPipelineBehavior) (Response, error) {
 	pipelineBehaviorFuncCalled = true
 	return next(ctx, req)
 }
 
-func BehaviorErrorFunc(ctx context.Context, req Request, next NextBipelineBehavior) (Response, error) {
+func BehaviorErrorFunc(ctx context.Context, req Request, next NextPipelineBehavior) (Response, error) {
 	pipelineBehaviorFuncCalled = true
 	return nil, errors.New("Test error")
 }

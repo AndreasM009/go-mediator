@@ -50,7 +50,7 @@ func (h *EchoCommandHandler) Handle(ctx context.Context, command EchoCommand) (s
 	return command.Message, nil
 }
 
-func BehaviorFunc(ctx context.Context, req Request, next mediator.NextBipelineBehavior) (Response, error) {
+func BehaviorFunc(ctx context.Context, req Request, next mediator.NextPipelineBehavior) (Response, error) {
 	return next(ctx, req)
 }
 
